@@ -12,3 +12,7 @@ Using bash script combined with Helm Chart: ministryofjustice/cla_public#1276
 
 ## Maintenance
 Please update the list without any spaces and comments. Use one IP range per line.
+
+### Future development
+- Add more CIDR files that are department-specific
+- Add unit tests to ensure syntax is correct in udpates
