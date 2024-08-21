@@ -8,7 +8,7 @@ This can be done using your Helm chart, bash scripts, pipeline configuration or 
 
 ### Examples:
 
-Using bash script combined with Helm Chart: ministryofjustice/cla_public#1276
+Pull using bash script combined with Helm Chart: ministryofjustice/cla_public#1276
 
 ## Maintenance
 Please update the list without any spaces and comments. Use one IP range per line.
