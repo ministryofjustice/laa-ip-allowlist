@@ -1,5 +1,5 @@
 # LAA Shared IP Allow list
-The list is intended to be pulled into applications for adding allow lists to IP-restricted areas. This should not be seen as a primary level of protection.
+The list is for use by LAA services that need their access restricted to an allow-list of internal devices. IP allow-listing should not be seen as a primary level of protection.
 
 ## Usage
 The list can be pulled from this URL: https://raw.githubusercontent.com/ministryofjustice/laa-ip-allowlist/main/cidrs.txt
@@ -11,7 +11,12 @@ This can be done using your Helm chart, bash scripts, pipeline configuration or 
 Using bash script combined with Helm Chart: ministryofjustice/cla_public#1276
 
 ## Maintenance
-Please update the list without any spaces and comments. Use one IP range per line.
+Please update the source list in cidrs.yaml, and then run:
+```
+./generate_cidrs_txt.sh
+```
+
+cidrs.txt will be generated with one IP range per line, and without any spaces and comments.
 
 
 ### Future development
