@@ -24,15 +24,8 @@ fi
 # Generate the cidrs.txt file
 echo "Generating $OUTPUT_FILE from $YAML_FILE..."
 
-# Create temporary file
-TEMP_FILE=$(mktemp)
-trap 'rm -f "$TEMP_FILE"' EXIT
-
-# Extract user_devices CIDRs
-yq eval '.user_devices[]' "$YAML_FILE" >> "$TEMP_FILE"
-
-# Move to final location
-mv "$TEMP_FILE" "$OUTPUT_FILE"
+# Extract all CIDRs from the user_devices array
+yq eval '.user_devices[]' "$YAML_FILE" > "$OUTPUT_FILE"
 
 echo "Successfully generated $OUTPUT_FILE"
 echo "Contents:"
