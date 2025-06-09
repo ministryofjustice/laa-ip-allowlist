@@ -17,11 +17,7 @@ fi
 # Check if yq is installed
 if ! command -v yq &> /dev/null; then
     echo "Error: yq is required but not installed" >&2
-    echo "Install with:" >&2
-    echo "  Ubuntu/Debian: sudo apt-get install yq" >&2
-    echo "  RHEL/Fedora:   sudo dnf install yq" >&2
-    echo "  macOS:         brew install yq" >&2
-    echo "  Snap:          sudo snap install yq" >&2
+    echo "Install with: brew install yq" >&2
     exit 1
 fi
 
@@ -32,8 +28,8 @@ echo "Generating $OUTPUT_FILE from $YAML_FILE..."
 TEMP_FILE=$(mktemp)
 trap 'rm -f "$TEMP_FILE"' EXIT
 
-# Extract all CIDRs while preserving comments from the YAML
-yq eval '.. | select(type == "!!str" and test("^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+(/[0-9]+)?$"))' "$YAML_FILE" >> "$TEMP_FILE"
+# Extract user_devices CIDRs
+yq eval '.user_devices[]' "$YAML_FILE" >> "$TEMP_FILE"
 
 # Move to final location
 mv "$TEMP_FILE" "$OUTPUT_FILE"
