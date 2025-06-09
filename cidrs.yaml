@@ -1,0 +1,21 @@
+# MOJ / LAA Egress IP Ranges
+# This file is the source for LAA IP allowlists
+user_devices:
+  # MoJO Production user egress
+  - 51.149.249.0/29
+  # ARK user egress
+  - 194.33.249.0/29
+  - 51.149.249.32/29
+  - 194.33.248.0/29
+  # Azure Virtual Desktop user egress
+  - 20.49.214.199/32
+  - 20.49.214.228/32
+  - 20.26.11.71/32
+  - 20.26.11.108/32
+  # Prisma VPN user egress
+  - 128.77.75.64/26
+  # Alpha VPN user egress
+  - 18.169.147.172/32
+  - 35.176.93.186/32
+  - 18.130.148.126/32
+  - 35.176.148.126/32

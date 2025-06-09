@@ -1,0 +1,56 @@
+name: Update cidrs.txt
+
+on:
+  # Trigger when cidrs.yaml is modified
+  push:
+    branches: [main, master]
+    paths:
+      - 'cidrs.yaml'
+  
+  # Allow manual triggering
+  workflow_dispatch:
+  
+  # Optional: Run weekly to catch any drift
+  schedule:
+    - cron: '0 9 * * 1'  # Every Monday at 9 AM UTC
+
+jobs:
+  update-cidrs:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: write  # Required to push changes back to repo
+      
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Install yq
+        run: |
+          sudo snap install yq
+      
+      - name: Make script executable
+        run: chmod +x generate-cidrs.sh
+      
+      - name: Generate cidrs.txt
+        run: ./generate_cidrs_txt.sh cidrs.yaml cidrs.txt
+      
+      - name: Check for changes
+        id: git-check
+        run: |
+          git diff --exit-code cidrs.txt || echo "changed=true" >> $GITHUB_OUTPUT
+      
+      - name: Commit and push changes
+        if: steps.git-check.outputs.changed == 'true'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add cidrs.txt
+          git commit -m "Auto-update cidrs.txt from cidrs.yaml"
+          git push
+      
+      - name: No changes detected
+        if: steps.git-check.outputs.changed != 'true'
+        run: echo "No changes detected in cidrs.txt"
