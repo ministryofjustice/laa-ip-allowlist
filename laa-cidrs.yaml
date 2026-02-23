@@ -1,0 +1,194 @@
+laa_cidrs:
+
+  # External CIDRs
+
+  - cidr: 51.149.249.0/29
+    description: ARK Corsham Internet Egress Exponential-E. MoJ Official Egress IP Addresses, staff devices connected to the Global Protect VPN service. 
+    tags:
+      - external
+      - staff
+
+  - cidr: 194.33.249.0/29
+    description: ARK Corsham Internet Egress Vodafone. MoJ Official Egress IP Addresses, staff devices connected to the Global Protect VPN service. 
+    tags:
+      - external
+      - staff
+
+  - cidr: 51.149.249.32/29
+    description: ARK Farnborough Internet Egress Exponential-E. MoJ Official Egress IP Addresses, staff devices connected to the Global Protect VPN service. 
+    tags:
+      - external
+      - staff
+
+  - cidr: 194.33.248.0/29
+    description: ARK Farnborough Internet Egress Vodafone. MoJ Official Egress IP Addresses, staff devices connected to the Global Protect VPN service. 
+    tags:
+      - external
+      - staff
+
+  - cidr: 128.77.75.64/26
+    description: Palo Alto Prisma Access Egress IP for Corporate.
+    tags:
+      - external
+      - staff
+
+  - cidr: 20.49.214.199/32
+    description: Azure Landing Zone Egress. MoJ Official Egress IP Addresses, staff devices connected to the Global Protect VPN service. 
+    tags:
+      - external
+      - staff
+
+  - cidr: 20.49.214.228/32
+    description: Azure Landing Zone Egress. MoJ Official Egress IP Addresses, staff devices connected to the Global Protect VPN service. 
+    tags:
+      - external
+      - staff
+
+  - cidr: 20.26.11.71/32
+    description: Azure Landing Zone Egress. MoJ Official Egress IP Addresses, staff devices connected to the Global Protect VPN service. 
+    tags:
+      - external
+      - staff
+
+  - cidr: 20.26.11.108/32
+    description: Azure Landing Zone Egress. MoJ Official Egress IP Addresses, staff devices connected to the Global Protect VPN service. 
+    tags:
+      - external
+      - staff
+
+  - cidr: 18.169.147.172/32
+    description: Gateway IP address for Global Protect Alpha VPN Firewall.
+    tags:
+      - external
+      - staff
+
+  - cidr: 35.176.93.186/32
+    description: Gateway IP address for Global Protect Alpha VPN Firewall.
+    tags:
+      - external
+      - staff
+
+  - cidr: 18.130.148.126/32
+    description: Gateway IP address for Global Protect Alpha VPN Firewall.
+    tags:
+      - external
+      - staff
+
+  - cidr: 35.176.148.126/32
+    description: Gateway IP address for Global Protect Alpha VPN Firewall.
+    tags:
+      - external
+      - staff
+  
+  - cidr: 13.41.38.176/32
+    description: Modernisation Platform NAT Gateway from PreProd and Prod.
+    tags:
+      - external
+      - nat
+      - mp-live
+
+  - cidr: 3.11.197.133/32
+    description: Modernisation Platform NAT Gateway from PreProd and Prod.
+    tags:
+      - external
+      - nat
+      - mp-live
+
+  - cidr: 3.8.81.175/32
+    description: Modernisation Platform NAT Gateway from PreProd and Prod.
+    tags:
+      - external
+      - nat
+      - mp-live
+
+  - cidr: 13.42.163.245/32
+    description: Modernisation Platform NAT Gateway from DEV and TEST.
+    tags:
+      - external
+      - nat
+      - mp-nonlive
+
+  - cidr: 13.43.9.198/32
+    description: Modernisation Platform NAT Gateway from DEV and TEST.
+    tags:
+      - external
+      - nat
+      - mp-nonlive
+
+  - cidr: 18.132.208.127/32
+    description: Modernisation Platform NAT Gateway from DEV and TEST.
+    tags:
+      - external
+      - nat
+      - mp-nonlive
+
+  - cidr: 35.178.209.113/32
+    description: Cloud Platform NAT Gateway.
+    tags:
+      - external
+      - nat
+      - cp
+
+  - cidr: 3.8.51.207/32
+    description: Cloud Platform NAT Gateway.
+    tags:
+      - external
+      - nat
+      - cp
+
+  - cidr: 35.177.252.54/32
+    description: Cloud Platform NAT Gateway.
+    tags:
+      - external
+      - nat
+      - cp
+
+
+  # Internal CIDRs
+
+  - cidr: 172.20.0.0/16
+    description: Cloud Platform VPC
+    tags:
+      - internal
+      - cp
+
+  - cidr: 10.26.56.0/21
+    description: Modernisation Platform LAA Development VPC
+    tags:
+      - internal
+      - mp
+      - dev
+
+  - cidr: 10.26.96.0/21
+    description: Modernisation Platform LAA Test VPC
+    tags:
+      - internal
+      - mp
+      - test
+
+  - cidr: 10.27.72.0/21
+    description: Modernisation Platform LAA Pre Production VPC
+    tags:
+      - internal
+      - mp
+      - preprod
+
+  - cidr: 10.27.64.0/21
+    description: Modernisation Platform LAA Production VPC
+    tags:
+      - internal
+      - mp
+      - prod
+
+  - cidr: 10.148.0.0/14
+    description: Moj WiFi Network
+    tags:
+      - internal
+      - staff
+
+  - cidr: 10.184.0.0/14
+    description: Global Protect VPN Users
+    tags:
+      - internal
+      - staff
+
