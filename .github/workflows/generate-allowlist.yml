@@ -1,0 +1,50 @@
+name: Generate LAA IP Allowlist
+
+on:
+  workflow_dispatch:
+    inputs:
+      groups:
+        description: "Comma-separated list of tag groups. Use semicolons to separate multiple groups. Example: 'external staff;external mp-live'"
+        required: true
+        default: "external staff;external mp-live"
+
+jobs:
+  generate-allowlist:
+    runs-on: ubuntu-latest
+    outputs:
+      allowlist: ${{ steps.laa-allowlist-ip-generate.outputs.allowlist }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml
+
+      - name: Generate IP list
+        id: laa-allowlist-ip-generate
+        run: |
+          # Convert input to multiple --group flags
+          GROUP_ARGS=""
+          IFS=';' read -ra GROUP_ARRAY <<< "${{ github.event.inputs.groups }}"
+          for group in "${GROUP_ARRAY[@]}"; do
+            GROUP_ARGS+="--group $group "
+          done
+
+          # Run the script and capture output
+          ALLOWLIST=$(python filter_cidrs.py $GROUP_ARGS | paste -sd "," -)
+          echo "Allowlist: $ALLOWLIST"
+
+          # Set as GitHub Actions output
+          echo "allowlist=$ALLOWLIST" >> $GITHUB_OUTPUT
+
+      - name: Debug output
+        run: |
+          echo "Allowlist from previous step: ${{ steps.laa-allowlist-ip-generate.outputs.allowlist }}"

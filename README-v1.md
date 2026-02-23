@@ -18,24 +18,9 @@ Each CIDR entry has one or more tags. The `filter_cidrs.py` script lets you quer
 
 ## Querying the list
 
-Run `filter_cidrs.py` with one or more `--group` arguments. Tags within a group are combined with **AND**, and multiple groups are combined with **OR**.
+### Tag logic
 
-```bash
-python filter_cidrs.py --group <tag1> [tag2 ...] [--group <tag3> ...]
-```
-
-**Examples:**
-
-```bash
-# Staff accessible app on Cloud Platform: expose to MoJ staff AND to MP live services
-python filter_cidrs.py --group external staff --group external mp-live
-
-# Internal facing app in MP: expose to Cloud Platform VPC and MP production VPC only
-python filter_cidrs.py --group internal cp --group internal mp prod
-
-# All external NAT gateways (Cloud Platform + all MP environments)
-python filter_cidrs.py --group external nat
-```
+Tags within a `--group` are combined with **AND**. Multiple `--group` arguments are combined with **OR**.
 
 **Available tags:**
 
@@ -58,27 +43,77 @@ python filter_cidrs.py --group external nat
 
 ## Integrating with your application
 
-Pull the CIDR list at **deployment time**, not at application runtime. If the script fails or produces malformed output, your deployment should fail safely without affecting the currently running application.
+There are two ways to generate a CIDR list: using the provided **GitHub Actions reusable workflow** (recommended), or running the **Python script** directly in your own pipeline.
 
-Recommended approaches:
+In either case, pull the list at **deployment time**, not at application runtime. If the script fails or produces malformed output, your deployment should fail safely without affecting the currently running application.
 
-**Helm / GitHub Actions**
-Generate the list during your CI pipeline and pass it as a Helm value:
+---
+
+### Option 1: GitHub Actions reusable workflow (recommended)
+
+This repository provides a reusable workflow you can call from your own GitHub Actions pipelines. It accepts tag groups as input and outputs a comma-separated CIDR list you can pass directly to your Helm chart or ingress configuration.
+
+**Calling the workflow:**
+
+```yaml
+jobs:
+  get-allowlist:
+    uses: ministryofjustice/laa-ip-allowlist/.github/workflows/generate-allowlist.yml@main
+    with:
+      # Separate tags within a group with spaces, separate groups with semicolons
+      groups: "external staff;external mp-live"
+
+  deploy:
+    needs: get-allowlist
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy with allowlist
+        run: |
+          helm upgrade my-app ./chart \
+            --set ingress.allowList="${{ needs.get-allowlist.outputs.allowlist }}"
+```
+
+**Workflow inputs:**
+
+| Input | Required | Description | Example |
+|---|---|---|---|
+| `groups` | Yes | Semicolon-separated tag groups. Tags within a group are space-separated. | `"external staff;external mp-live"` |
+
+**Workflow outputs:**
+
+| Output | Description | Example |
+|---|---|---|
+| `allowlist` | Comma-separated list of matching CIDRs | `"51.149.249.0/29,194.33.249.0/29,..."` |
+
+**Example group combinations:**
+
+| Scenario | `groups` input |
+|---|---|
+| Staff-accessible app on Cloud Platform | `"external staff;external mp-live"` |
+| Internal app: CP VPC and MP production only | `"internal cp;internal mp prod"` |
+| All external NAT gateways | `"external nat"` |
+
+---
+
+### Option 2: Python script directly
+
+If you are not using GitHub Actions, you can run `filter_cidrs.py` directly in your pipeline.
+
+```bash
+python filter_cidrs.py --group <tag1> [tag2 ...] [--group <tag3> ...]
+```
+
+To produce a comma-separated list suitable for a Helm value:
 
 ```bash
 CIDRS=$(python filter_cidrs.py --group external staff --group external mp-live | paste -sd, -)
 helm upgrade my-app ./chart --set ingress.allowList="$CIDRS"
 ```
 
-**Kubernetes `ingress.yaml` annotation (NGINX)**
+**Kubernetes NGINX ingress annotation:**
 ```yaml
 nginx.ingress.kubernetes.io/whitelist-source-range: "51.149.249.0/29,194.33.249.0/29,..."
 ```
-
-**CircleCI**
-Run the script as a step before your deploy step and export the result as an environment variable or write it to a file consumed by your Helm chart.
-
-The key principle: if fetching or generating this list fails, the deployment should fail — not silently proceed with a broken or empty allow list.
 
 ---
 
