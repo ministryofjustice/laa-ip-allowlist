@@ -7,6 +7,17 @@ on:
         description: "Comma-separated list of tag groups. Use semicolons to separate multiple groups. Example: 'external staff;external mp-live'"
         required: true
         default: "external staff;external mp-live"
+  workflow_call:
+    inputs:
+      groups:
+        description: "Comma-separated list of tag groups. Use semicolons to separate multiple groups. Example: 'external staff;external mp-live'"
+        type: string
+        required: true
+        default: "external staff;external mp-live"
+    outputs:
+      allowlist:
+        description: "Comma-separated list of matching CIDRs"
+        value: ${{ jobs.generate-allowlist.outputs.allowlist }}
 
 jobs:
   generate-allowlist:
