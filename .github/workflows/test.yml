@@ -2,9 +2,12 @@ name: Generate LAA IP Allowlist
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - CC-4327
 jobs:
   get-allowlist:
-    uses: ministryofjustice/laa-ip-allowlist/.github/workflows/generate-allowlist.yml@main
+    uses: ministryofjustice/laa-ip-allowlist/.github/workflows/generate-allowlist.yml@CC-4327
     with:
       # Separate tags within a group with spaces, separate groups with semicolons
       groups: "external mp-nonlive;external mp-live"
