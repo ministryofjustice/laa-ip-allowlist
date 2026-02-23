@@ -19,3 +19,6 @@ jobs:
       - name: Deploy with allowlist
         run: |
           echo "${{ needs.get-allowlist.outputs.allowlist }}"
+        # You can use the below 
+        # helm upgrade my-app ./chart \
+        #            --set ingress.allowList="${{ needs.get-allowlist.outputs.allowlist }}"          

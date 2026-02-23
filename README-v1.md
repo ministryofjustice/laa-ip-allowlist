@@ -51,7 +51,7 @@ In either case, pull the list at **deployment time**, not at application runtime
 
 ### Option 1: GitHub Actions reusable workflow (recommended)
 
-This repository provides a reusable workflow you can call from your own GitHub Actions pipelines. It accepts tag groups as input and outputs a comma-separated CIDR list you can pass directly to your Helm chart or ingress configuration.
+This repository provides a reusable workflow you can call from your own GitHub Actions pipelines. It accepts tag groups as input and outputs a comma-separated CIDR list you can pass directly to your Helm chart or ingress configuration. There is a test.yml workflow example similar to below.
 
 **Calling the workflow:**
 
