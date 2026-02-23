@@ -44,7 +44,7 @@ jobs:
         run: |
           # Convert input to multiple --group flags
           GROUP_ARGS=""
-          IFS=';' read -ra GROUP_ARRAY <<< "${{ github.event.inputs.groups }}"
+          IFS=';' read -ra GROUP_ARRAY <<< "${{ inputs.groups }}"
           for group in "${GROUP_ARRAY[@]}"; do
             GROUP_ARGS+="--group $group "
           done
