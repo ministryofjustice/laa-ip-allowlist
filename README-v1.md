@@ -31,7 +31,7 @@ python filter_cidrs.py --group <tag1> [tag2 ...] [--group <tag3> ...]
 python filter_cidrs.py --group external staff --group external mp-live
 
 # Internal facing app in MP: expose to Cloud Platform VPC and MP production VPC only
-python filter_cidrs.py --group internal cp --group internal prod
+python filter_cidrs.py --group internal cp --group internal mp prod
 
 # All external NAT gateways (Cloud Platform + all MP environments)
 python filter_cidrs.py --group external nat
