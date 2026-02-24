@@ -1,19 +1,22 @@
 #!/usr/bin/env python3
+from __future__ import annotations
 
 import argparse
 import ipaddress
 import logging
 import sys
-import yaml
 from pathlib import Path
+from typing import Any
+
+import yaml
 
 log = logging.getLogger(__name__)
 
 
-def load_yaml(path: Path) -> list:
+def load_yaml(path: Path) -> list[dict[str, Any]]:
     try:
         with open(path, "r") as f:
-            data = yaml.safe_load(f)
+            data: Any = yaml.safe_load(f)
     except FileNotFoundError:
         log.error("File not found: %s", path)
         sys.exit(1)
@@ -41,7 +44,7 @@ def load_yaml(path: Path) -> list:
     return cidrs
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(
         description=(
             "Extract CIDRs from a YAML allowlist file by matching tag groups.\n\n"
@@ -108,7 +111,7 @@ def main():
         ),
     )
 
-    args = parser.parse_args()
+    args: argparse.Namespace = parser.parse_args()
 
     logging.basicConfig(
         level=logging.DEBUG if args.debug else logging.WARNING,
@@ -138,12 +141,12 @@ def main():
             log.warning("Entry %d has non-string 'cidr' value (%r), skipping", i, cidr)
             continue
 
-        tags_raw = item.get("tags", [])
+        tags_raw: list[Any] = item.get("tags", [])
         if not isinstance(tags_raw, list):
             log.warning("Entry %d has non-list 'tags' value, skipping: %s", i, item)
             continue
 
-        non_str_tags = [t for t in tags_raw if not isinstance(t, str)]
+        non_str_tags: list[Any] = [t for t in tags_raw if not isinstance(t, str)]
         if non_str_tags:
             log.warning("Entry %d has non-string tag(s) %r, skipping", i, non_str_tags)
             continue
@@ -155,7 +158,7 @@ def main():
                 log.warning("Entry %d has invalid CIDR '%s', skipping", i, cidr)
                 continue
 
-        entry_tags = set(tags_raw)
+        entry_tags: set[str] = set(tags_raw)
         log.debug("Entry %d: cidr=%s tags=%s", i, cidr, entry_tags)
 
         # OR across groups
