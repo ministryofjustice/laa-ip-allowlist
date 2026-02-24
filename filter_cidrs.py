@@ -10,10 +10,10 @@ from pathlib import Path
 log = logging.getLogger(__name__)
 
 
-def load_yaml(path: Path):
+def load_yaml(path: Path) -> list:
     try:
         with open(path, "r") as f:
-            return yaml.safe_load(f)
+            data = yaml.safe_load(f)
     except FileNotFoundError:
         log.error("File not found: %s", path)
         sys.exit(1)
@@ -24,36 +24,88 @@ def load_yaml(path: Path):
         log.error("Failed to parse YAML file %s: %s", path, exc)
         sys.exit(1)
 
+    if not isinstance(data, dict):
+        log.error("YAML file %s does not contain a mapping at the root level", path)
+        sys.exit(1)
+
+    if "laa_cidrs" not in data:
+        log.error("Key 'laa_cidrs' not found in %s", path)
+        sys.exit(1)
+
+    cidrs = data["laa_cidrs"]
+
+    if not isinstance(cidrs, list):
+        log.error("'laa_cidrs' in %s is not a list", path)
+        sys.exit(1)
+
+    return cidrs
+
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Extract CIDRs using tag groups (AND inside group, OR between groups)"
+        description=(
+            "Extract CIDRs from a YAML allowlist file by matching tag groups.\n\n"
+            "Tag-matching logic:\n"
+            "  Within a single --group, ALL tags must be present (AND).\n"
+            "  Across multiple --group flags, ANY match is sufficient (OR).\n"
+            "  Duplicate CIDRs in the output are automatically removed."
+        ),
+        epilog=(
+            "examples:\n"
+            "  Match CIDRs tagged with both 'external' AND 'staff':\n"
+            "    %(prog)s --group external staff\n\n"
+            "  Match CIDRs tagged 'external' OR 'internal' (separate groups):\n"
+            "    %(prog)s --group external --group internal\n\n"
+            "  Match ('external' AND 'staff') OR ('internal' AND 'vpn'):\n"
+            "    %(prog)s --group external staff --group internal vpn\n\n"
+            "  Use a custom YAML file:\n"
+            "    %(prog)s --group external -f /path/to/custom.yaml\n\n"
+            "  Show detailed matching information on stderr:\n"
+            "    %(prog)s --group external --debug\n\n"
+            "  Skip CIDR syntax validation (trusted inputs):\n"
+            "    %(prog)s --group external --no-validate\n\n"
+            "  Pipe matched CIDRs into another tool:\n"
+            "    %(prog)s --group external staff | xargs -I{} echo {}"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
     parser.add_argument(
-        "--group",
+        "-g", "--group",
         nargs="+",
         action="append",
         required=True,
-        help="Tag group. Repeatable. Example: --group external staff"
+        metavar="TAG",
+        help=(
+            "One or more tags that must ALL be present on a CIDR entry (AND). "
+            "Repeat the flag to add alternative groups (OR). "
+            "Example: --group external staff --group internal"
+        ),
     )
 
     parser.add_argument(
         "-f", "--file",
         default="laa-cidrs.yaml",
-        help="Path to YAML file"
+        metavar="PATH",
+        help="Path to the YAML allowlist file (default: laa-cidrs.yaml).",
     )
 
     parser.add_argument(
-        "--debug",
+        "-D", "--debug",
         action="store_true",
-        help="Enable debug logging to stderr"
+        help=(
+            "Enable DEBUG-level logging to stderr. "
+            "Shows each entry evaluated, its tags, and why it matched or was skipped."
+        ),
     )
 
     parser.add_argument(
         "--no-validate",
         action="store_true",
-        help="Skip CIDR syntax validation (faster on trusted inputs)"
+        help=(
+            "Skip IPv4/IPv6 CIDR syntax validation. "
+            "Use on trusted inputs where validation overhead is unwanted."
+        ),
     )
 
     args = parser.parse_args()
@@ -65,22 +117,7 @@ def main():
     )
 
     log.debug("Loading YAML file: %s", args.file)
-    data = load_yaml(Path(args.file))
-
-    if not isinstance(data, dict):
-        log.error("YAML file %s does not contain a mapping at the root level", args.file)
-        sys.exit(1)
-
-    if "laa_cidrs" not in data:
-        log.error("Key 'laa_cidrs' not found in %s", args.file)
-        sys.exit(1)
-
-    cidrs = data["laa_cidrs"]
-
-    if not isinstance(cidrs, list):
-        log.error("'laa_cidrs' in %s is not a list", args.file)
-        sys.exit(1)
-
+    cidrs = load_yaml(Path(args.file))
     log.debug("Loaded %d entries from %s", len(cidrs), args.file)
     log.debug("Tag groups: %s", args.group)
 
@@ -95,12 +132,21 @@ def main():
             log.warning("Entry %d missing 'cidr' key, skipping: %s", i, item)
             continue
 
+        cidr = item["cidr"]
+
+        if not isinstance(cidr, str):
+            log.warning("Entry %d has non-string 'cidr' value (%r), skipping", i, cidr)
+            continue
+
         tags_raw = item.get("tags", [])
         if not isinstance(tags_raw, list):
             log.warning("Entry %d has non-list 'tags' value, skipping: %s", i, item)
             continue
 
-        cidr = item["cidr"]
+        non_str_tags = [t for t in tags_raw if not isinstance(t, str)]
+        if non_str_tags:
+            log.warning("Entry %d has non-string tag(s) %r, skipping", i, non_str_tags)
+            continue
 
         if not args.no_validate:
             try:
