@@ -65,12 +65,16 @@ def main() -> int:
             "    %(prog)s --group external -f /path/to/custom.yaml\n\n"
             "  Show detailed matching information on stderr:\n"
             "    %(prog)s --group external --debug\n\n"
-            "  Skip CIDR syntax validation (trusted inputs):\n"
-            "    %(prog)s --group external --no-validate\n\n"
             "  Pipe matched CIDRs into another tool:\n"
             "    %(prog)s --group external staff | xargs -I{} echo {}\n\n"
             "  Write matched CIDRs to a file:\n"
             "    %(prog)s --group external staff -o cidrs.txt\n\n"
+            "  Sort output by network address:\n"
+            "    %(prog)s --group external staff --sort\n\n"
+            "  Aggregate matched CIDRs into the minimal supernet set:\n"
+            "    %(prog)s --group external staff -a\n\n"
+            "  Aggregate and explain which CIDRs were merged (report on stderr):\n"
+            "    %(prog)s --group external staff -A\n\n"
             "  List all available tags in the YAML file:\n"
             "    %(prog)s --list-tags"
         ),
@@ -114,6 +118,36 @@ def main() -> int:
     )
 
     parser.add_argument(
+        "-s", "--sort",
+        action="store_true",
+        help=(
+            "Sort output CIDRs by network address. "
+            "IPv4 addresses are listed before IPv6; within each version, "
+            "results are ordered by network address then prefix length."
+        ),
+    )
+
+    parser.add_argument(
+        "-a", "--aggregate",
+        action="store_true",
+        help=(
+            "Collapse matched CIDRs into the minimal set of supernets that covers "
+            "the same address space, using ipaddress.collapse_addresses(). "
+            "IPv4 and IPv6 results are aggregated independently then combined. "
+            "Implies sorted output."
+        ),
+    )
+
+    parser.add_argument(
+        "-A", "--aggregate-explain",
+        action="store_true",
+        help=(
+            "Print a merge report to stderr showing which original CIDRs were "
+            "combined into each supernet. Implies --aggregate."
+        ),
+    )
+
+    parser.add_argument(
         "-D", "--debug",
         action="store_true",
         help=(
@@ -122,16 +156,10 @@ def main() -> int:
         ),
     )
 
-    parser.add_argument(
-        "--no-validate",
-        action="store_true",
-        help=(
-            "Skip IPv4/IPv6 CIDR syntax validation. "
-            "Use on trusted inputs where validation overhead is unwanted."
-        ),
-    )
-
     args: argparse.Namespace = parser.parse_args()
+
+    if args.aggregate_explain:
+        args.aggregate = True
 
     logging.basicConfig(
         level=logging.DEBUG if args.debug else logging.WARNING,
@@ -187,12 +215,11 @@ def main() -> int:
             log.warning("Entry %d has non-string tag(s) %r, skipping", i, non_str_tags)
             continue
 
-        if not args.no_validate:
-            try:
-                ipaddress.ip_network(cidr, strict=False)
-            except ValueError:
-                log.warning("Entry %d has invalid CIDR '%s', skipping", i, cidr)
-                continue
+        try:
+            ipaddress.ip_network(cidr, strict=False)
+        except ValueError:
+            log.warning("Entry %d has invalid CIDR '%s', skipping", i, cidr)
+            continue
 
         entry_tags: set[str] = set(tags_raw)
         log.debug("Entry %d: cidr=%s tags=%s", i, cidr, entry_tags)
@@ -207,16 +234,60 @@ def main() -> int:
 
     log.debug("Output: %d unique CIDR(s) matched", len(matched))
 
+    if args.aggregate:
+        nets = [ipaddress.ip_network(c, strict=False) for c in matched]
+        collapsed = [
+            *ipaddress.collapse_addresses(n for n in nets if n.version == 4),
+            *ipaddress.collapse_addresses(n for n in nets if n.version == 6),
+        ]
+        base_cidrs: list[str] = [str(n) for n in collapsed]
+        log.debug("Aggregated to %d CIDR(s)", len(base_cidrs))
+
+        if args.aggregate_explain:
+            merged_count = 0
+            for supernet in collapsed:
+                constituents = [
+                    n for n in nets
+                    if n.version == supernet.version and n.subnet_of(supernet)
+                ]
+                if len(constituents) > 1:
+                    merged_count += 1
+                    print(
+                        f"Merged: {supernet} = "
+                        + " + ".join(str(n) for n in constituents),
+                        file=sys.stderr,
+                    )
+            print(
+                f"\nAggregated {len(nets)} original CIDR(s) into "
+                f"{len(collapsed)} supernet(s) "
+                f"({merged_count} merge(s)).",
+                file=sys.stderr,
+            )
+    else:
+        base_cidrs = list(matched)
+
+    output_cidrs: list[str] = (
+        sorted(
+            base_cidrs,
+            key=lambda c: (
+                (net := ipaddress.ip_network(c, strict=False)).version,
+                net.network_address.packed,
+                net.prefixlen,
+            ),
+        )
+        if (args.sort or args.aggregate) else base_cidrs
+    )
+
     if args.output:
         output_path = Path(args.output)
         try:
-            output_path.write_text("".join(f"{cidr}\n" for cidr in matched))
+            output_path.write_text("".join(f"{cidr}\n" for cidr in output_cidrs))
         except (PermissionError, OSError) as exc:
             log.error("Failed to write output file %s: %s", output_path, exc)
             sys.exit(2)
-        log.debug("Written %d CIDR(s) to %s", len(matched), output_path)
+        log.debug("Written %d CIDR(s) to %s", len(output_cidrs), output_path)
     else:
-        for cidr in matched:
+        for cidr in output_cidrs:
             print(cidr)
 
     return 0 if matched else 1
