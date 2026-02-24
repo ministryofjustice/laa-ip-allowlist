@@ -19,32 +19,32 @@ def load_yaml(path: Path) -> list[dict[str, Any]]:
             data: Any = yaml.safe_load(f)
     except FileNotFoundError:
         log.error("File not found: %s", path)
-        sys.exit(1)
+        sys.exit(2)
     except PermissionError:
         log.error("Permission denied reading file: %s", path)
-        sys.exit(1)
+        sys.exit(2)
     except yaml.YAMLError as exc:
         log.error("Failed to parse YAML file %s: %s", path, exc)
-        sys.exit(1)
+        sys.exit(2)
 
     if not isinstance(data, dict):
         log.error("YAML file %s does not contain a mapping at the root level", path)
-        sys.exit(1)
+        sys.exit(2)
 
     if "laa_cidrs" not in data:
         log.error("Key 'laa_cidrs' not found in %s", path)
-        sys.exit(1)
+        sys.exit(2)
 
     cidrs = data["laa_cidrs"]
 
     if not isinstance(cidrs, list):
         log.error("'laa_cidrs' in %s is not a list", path)
-        sys.exit(1)
+        sys.exit(2)
 
     return cidrs
 
 
-def main() -> None:
+def main() -> int:
     parser = argparse.ArgumentParser(
         description=(
             "Extract CIDRs from a YAML allowlist file by matching tag groups.\n\n"
@@ -173,6 +173,8 @@ def main() -> None:
     for cidr in matched:
         print(cidr)
 
+    return 0 if matched else 1
+
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
