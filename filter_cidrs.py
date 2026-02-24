@@ -68,7 +68,11 @@ def main() -> int:
             "  Skip CIDR syntax validation (trusted inputs):\n"
             "    %(prog)s --group external --no-validate\n\n"
             "  Pipe matched CIDRs into another tool:\n"
-            "    %(prog)s --group external staff | xargs -I{} echo {}"
+            "    %(prog)s --group external staff | xargs -I{} echo {}\n\n"
+            "  Write matched CIDRs to a file:\n"
+            "    %(prog)s --group external staff -o cidrs.txt\n\n"
+            "  List all available tags in the YAML file:\n"
+            "    %(prog)s --list-tags"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
@@ -77,12 +81,21 @@ def main() -> int:
         "-g", "--group",
         nargs="+",
         action="append",
-        required=True,
         metavar="TAG",
         help=(
             "One or more tags that must ALL be present on a CIDR entry (AND). "
             "Repeat the flag to add alternative groups (OR). "
+            "Required unless --list-tags is used. "
             "Example: --group external staff --group internal"
+        ),
+    )
+
+    parser.add_argument(
+        "-l", "--list-tags",
+        action="store_true",
+        help=(
+            "Print all unique tags found in the YAML file, sorted alphabetically, "
+            "then exit. Useful for discovering available tags before filtering."
         ),
     )
 
@@ -91,6 +104,13 @@ def main() -> int:
         default="laa-cidrs.yaml",
         metavar="PATH",
         help="Path to the YAML allowlist file (default: laa-cidrs.yaml).",
+    )
+
+    parser.add_argument(
+        "-o", "--output",
+        default=None,
+        metavar="PATH",
+        help="Write matched CIDRs to PATH instead of stdout.",
     )
 
     parser.add_argument(
@@ -119,9 +139,25 @@ def main() -> int:
         stream=sys.stderr,
     )
 
+    if not args.list_tags and not args.group:
+        parser.error("the following arguments are required: -g/--group")
+
     log.debug("Loading YAML file: %s", args.file)
     cidrs = load_yaml(Path(args.file))
     log.debug("Loaded %d entries from %s", len(cidrs), args.file)
+
+    if args.list_tags:
+        all_tags: set[str] = set()
+        for item in cidrs:
+            if not isinstance(item, dict):
+                continue
+            tags_raw = item.get("tags", [])
+            if isinstance(tags_raw, list):
+                all_tags.update(t for t in tags_raw if isinstance(t, str))
+        for tag in sorted(all_tags):
+            print(tag)
+        return 0
+
     log.debug("Tag groups: %s", args.group)
 
     matched: dict[str, None] = {}
@@ -170,8 +206,18 @@ def main() -> int:
                 break
 
     log.debug("Output: %d unique CIDR(s) matched", len(matched))
-    for cidr in matched:
-        print(cidr)
+
+    if args.output:
+        output_path = Path(args.output)
+        try:
+            output_path.write_text("".join(f"{cidr}\n" for cidr in matched))
+        except (PermissionError, OSError) as exc:
+            log.error("Failed to write output file %s: %s", output_path, exc)
+            sys.exit(2)
+        log.debug("Written %d CIDR(s) to %s", len(matched), output_path)
+    else:
+        for cidr in matched:
+            print(cidr)
 
     return 0 if matched else 1
 
