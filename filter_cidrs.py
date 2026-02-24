@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import ipaddress
 import logging
 import sys
 import yaml
@@ -49,6 +50,12 @@ def main():
         help="Enable debug logging to stderr"
     )
 
+    parser.add_argument(
+        "--no-validate",
+        action="store_true",
+        help="Skip CIDR syntax validation (faster on trusted inputs)"
+    )
+
     args = parser.parse_args()
 
     logging.basicConfig(
@@ -77,6 +84,8 @@ def main():
     log.debug("Loaded %d entries from %s", len(cidrs), args.file)
     log.debug("Tag groups: %s", args.group)
 
+    matched: dict[str, None] = {}
+
     for i, item in enumerate(cidrs):
         if not isinstance(item, dict):
             log.warning("Entry %d is not a mapping, skipping", i)
@@ -91,16 +100,29 @@ def main():
             log.warning("Entry %d has non-list 'tags' value, skipping: %s", i, item)
             continue
 
+        cidr = item["cidr"]
+
+        if not args.no_validate:
+            try:
+                ipaddress.ip_network(cidr, strict=False)
+            except ValueError:
+                log.warning("Entry %d has invalid CIDR '%s', skipping", i, cidr)
+                continue
+
         entry_tags = set(tags_raw)
-        log.debug("Entry %d: cidr=%s tags=%s", i, item["cidr"], entry_tags)
+        log.debug("Entry %d: cidr=%s tags=%s", i, cidr, entry_tags)
 
         # OR across groups
         for group in args.group:
             # AND within group
             if set(group).issubset(entry_tags):
                 log.debug("  -> matched group %s", group)
-                print(item["cidr"])
+                matched[cidr] = None  # dict preserves insertion order and deduplicates
                 break
+
+    log.debug("Output: %d unique CIDR(s) matched", len(matched))
+    for cidr in matched:
+        print(cidr)
 
 
 if __name__ == "__main__":
