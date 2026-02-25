@@ -4,10 +4,10 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - CC-4327
+      - CC-4327-dev
 jobs:
   get-allowlist:
-    uses: ministryofjustice/laa-ip-allowlist/.github/workflows/generate-allowlist.yml@CC-4327
+    uses: ministryofjustice/laa-ip-allowlist/.github/workflows/generate-allowlist.yml@CC-4327-dev
     with:
       # Separate tags within a group with spaces, separate groups with semicolons
       groups: "external mp-nonlive;external mp-live"

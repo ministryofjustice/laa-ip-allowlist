@@ -27,12 +27,12 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: '3.13'
 
       - name: Install dependencies
         run: |
@@ -42,15 +42,17 @@ jobs:
       - name: Generate IP list
         id: laa-allowlist-ip-generate
         run: |
-          # Convert input to multiple --group flags
-          GROUP_ARGS=""
+          set -o pipefail
+
+          # Convert semicolon-separated groups into --group flag array
+          GROUP_ARGS=()
           IFS=';' read -ra GROUP_ARRAY <<< "${{ inputs.groups }}"
           for group in "${GROUP_ARRAY[@]}"; do
-            GROUP_ARGS+="--group $group "
+            GROUP_ARGS+=(--group $group)
           done
 
-          # Run the script and capture output
-          ALLOWLIST=$(python filter_cidrs.py $GROUP_ARGS | paste -sd "," -)
+          # Run the script and capture output (exits 1 if no CIDRs match, 2 on error)
+          ALLOWLIST=$(python filter_cidrs.py "${GROUP_ARGS[@]}" | paste -sd "," -)
           echo "Allowlist: $ALLOWLIST"
 
           # Set as GitHub Actions output
