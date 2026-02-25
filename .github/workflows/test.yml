@@ -7,7 +7,7 @@ on:
       - CC-4327-dev
 jobs:
   get-allowlist:
-    uses: ministryofjustice/laa-ip-allowlist/.github/workflows/generate-allowlist.yml@CC-4327-dev
+    uses: ministryofjustice/laa-ip-allowlist/.github/workflows/generate-allowlist.yml@v1.0.0
     with:
       # Separate tags within a group with spaces, separate groups with semicolons
       groups: "external mp-nonlive;external mp-live"
