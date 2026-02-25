@@ -58,7 +58,7 @@ This repository provides a reusable workflow you can call from your own GitHub A
 ```yaml
 jobs:
   get-allowlist:
-    uses: ministryofjustice/laa-ip-allowlist/.github/workflows/generate-allowlist.yml@v1.0.0
+    uses: ministryofjustice/laa-ip-allowlist/.github/workflows/generate-allowlist.yml@v1.1.0
     with:
       # Separate tags within a group with spaces, separate groups with semicolons
       groups: "external staff;external mp-live"

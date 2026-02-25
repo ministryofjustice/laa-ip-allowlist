@@ -143,6 +143,53 @@ laa_cidrs:
       - nat
       - cp
 
+  - cidr: 35.176.127.232/32
+    description: Landing Zone NAT Gateway. NonProd Landing Zone AWS Workspace.
+    tags:
+      - external
+      - nat
+      - nonprod
+      - lz
+
+  - cidr: 18.130.39.94/32
+    description: Landing Zone NAT Gateway. NonProd Landing Zone AWS Workspace.
+    tags:
+      - external
+      - nat
+      - nonprod
+      - lz
+
+  - cidr: 35.177.145.193/32
+    description: Landing Zone NAT Gateway. NonProd Landing Zone AWS Workspace.
+    tags:
+      - external
+      - nat
+      - nonprod
+      - lz
+
+  - cidr: 35.176.254.38/32
+    description: Landing Zone NAT Gateway. Prod Landing Zone AWS Workspace.
+    tags:
+      - external
+      - nat
+      - prod
+      - lz
+
+  - cidr: 52.56.212.11/32
+    description: Landing Zone NAT Gateway. Prod Landing Zone AWS Workspace.
+    tags:
+      - external
+      - nat
+      - prod
+      - lz
+
+  - cidr: 35.177.173.197/32
+    description: Landing Zone NAT Gateway. Prod Landing Zone AWS Workspace.
+    tags:
+      - external
+      - nat
+      - prod
+      - lz
 
   # Internal CIDRs
 
@@ -192,3 +239,16 @@ laa_cidrs:
       - internal
       - staff
 
+  - cidr: 10.200.0.0/20
+    description: NonProd Landing Zone AWS Workspace - Internal Range.
+    tags:
+      - internal
+      - nonprod
+      - lz
+
+  - cidr: 10.200.16.0/20
+    description: Prod Landing Zone AWS Workspace - Internal Range.
+    tags:
+      - internal
+      - prod
+      - lz
