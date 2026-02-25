@@ -1,0 +1,63 @@
+name: Generate LAA IP Allowlist
+
+on:
+  workflow_dispatch:
+    inputs:
+      groups:
+        description: "Comma-separated list of tag groups. Use semicolons to separate multiple groups. Example: 'external staff;external mp-live'"
+        required: true
+        default: "external staff;external mp-live"
+  workflow_call:
+    inputs:
+      groups:
+        description: "Comma-separated list of tag groups. Use semicolons to separate multiple groups. Example: 'external staff;external mp-live'"
+        type: string
+        required: true
+        default: "external staff;external mp-live"
+    outputs:
+      allowlist:
+        description: "Comma-separated list of matching CIDRs"
+        value: ${{ jobs.generate-allowlist.outputs.allowlist }}
+
+jobs:
+  generate-allowlist:
+    runs-on: ubuntu-latest
+    outputs:
+      allowlist: ${{ steps.laa-allowlist-ip-generate.outputs.allowlist }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml
+
+      - name: Generate IP list
+        id: laa-allowlist-ip-generate
+        run: |
+          set -o pipefail
+
+          # Convert semicolon-separated groups into --group flag array
+          GROUP_ARGS=()
+          IFS=';' read -ra GROUP_ARRAY <<< "${{ inputs.groups }}"
+          for group in "${GROUP_ARRAY[@]}"; do
+            GROUP_ARGS+=(--group $group)
+          done
+
+          # Run the script and capture output (exits 1 if no CIDRs match, 2 on error)
+          ALLOWLIST=$(python filter_cidrs.py "${GROUP_ARGS[@]}" | paste -sd "," -)
+          echo "Allowlist: $ALLOWLIST"
+
+          # Set as GitHub Actions output
+          echo "allowlist=$ALLOWLIST" >> $GITHUB_OUTPUT
+
+      - name: Debug output
+        run: |
+          echo "Allowlist from previous step: ${{ steps.laa-allowlist-ip-generate.outputs.allowlist }}"
