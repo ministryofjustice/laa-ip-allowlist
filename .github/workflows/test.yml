@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - CC-4327-dev
+      - main
 jobs:
   get-allowlist:
     uses: ministryofjustice/laa-ip-allowlist/.github/workflows/generate-allowlist.yml@v1.0.0
