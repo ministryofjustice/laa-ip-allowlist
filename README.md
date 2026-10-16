@@ -27,6 +27,7 @@ Tags within a `--group` are combined with **AND**. Multiple `--group` arguments 
 | Tag | Description |
 |---|---|
 | `external` | Publicly routable IPs (egress/NAT) |
+| `github-actions` | Dedicated egress IPs for GitHub Actions runners |
 | `internal` | Private/RFC1918 ranges (VPCs, internal networks) |
 | `staff` | MoJ staff access (VPN egress, MoJ WiFi, Global Protect) |
 | `nat` | NAT gateway IPs for Cloud Platform or Modernisation Platform |

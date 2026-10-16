@@ -79,6 +79,12 @@ laa_cidrs:
     tags:
       - external
       - staff
+
+  - cidr: 20.58.27.30/32
+    description: Dedicated egress IP for the GitHub-hosted octo-production runner.
+    tags:
+      - external
+      - github-actions
   
   - cidr: 13.41.38.176/32
     description: Modernisation Platform NAT Gateway from PreProd and Prod.
